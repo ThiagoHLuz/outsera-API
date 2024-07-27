@@ -45,17 +45,14 @@ public class ProducerService {
     public AwardsIntervalDTO getMaxAndMinPrizes() {
         List<MovieProducer> mpList = movieProducerRepository.findByMovieWinnerOrderByProducerId(true);
 
-        ProducerPrizesDTO min = findMinInterval(mpList);
-        ProducerPrizesDTO max = findMaxInterval(mpList);
-
         AwardsIntervalDTO dto = new AwardsIntervalDTO();
-        dto.addMin(min);
-        dto.addMax(max);
+        dto.setMin(findMinInterval(mpList));
+        dto.setMax(findMaxInterval(mpList));
 
         return dto;
     }
 
-    private ProducerPrizesDTO findMinInterval(List<MovieProducer> mpList) {
+    private List<ProducerPrizesDTO> findMinInterval(List<MovieProducer> mpList) {
         Map<String, List<Integer>> producerWins = new HashMap<>();
 
         for (MovieProducer mp : mpList) {
@@ -63,7 +60,8 @@ public class ProducerService {
                     .add(mp.getMovie().getYear());
         }
 
-        ProducerPrizesDTO min = new ProducerPrizesDTO(null, Integer.MAX_VALUE, null, null);
+        List<ProducerPrizesDTO> listMinIntervals = new ArrayList<>();
+        int minInterval = Integer.MAX_VALUE;
 
         for (Map.Entry<String, List<Integer>> entry : producerWins.entrySet()) {
             String producer = entry.getKey();
@@ -73,19 +71,19 @@ public class ProducerService {
 
             for (int i = 0; i < years.size() - 1; i++) {
                 int interval = years.get(i + 1) - years.get(i);
-                if (interval < min.getInterval()) {
-                    min.setInterval(interval);
-                    min.setProducer(producer);
-                    min.setPreviousWin(years.get(i));
-                    min.setFollowingWin(years.get(i + 1));
+                if (interval < minInterval) {
+                    minInterval = interval;
+                    listMinIntervals.clear();
+                    listMinIntervals.add(new ProducerPrizesDTO(producer, interval, years.get(i), years.get(i + 1)));
+                } else if (interval == minInterval) {
+                    listMinIntervals.add(new ProducerPrizesDTO(producer, interval, years.get(i), years.get(i + 1)));
                 }
             }
         }
-
-        return min;
+        return listMinIntervals;
     }
 
-    private ProducerPrizesDTO findMaxInterval(List<MovieProducer> mpList) {
+    private List<ProducerPrizesDTO> findMaxInterval(List<MovieProducer> mpList) {
         Map<String, List<Integer>> producerWins = new HashMap<>();
 
         for (MovieProducer mp : mpList) {
@@ -93,7 +91,8 @@ public class ProducerService {
                     .add(mp.getMovie().getYear());
         }
 
-        ProducerPrizesDTO max = new ProducerPrizesDTO(null, Integer.MIN_VALUE, null, null);
+        List<ProducerPrizesDTO> listMaxIntervals = new ArrayList<>();
+        int maxInterval = Integer.MIN_VALUE;
 
         for (Map.Entry<String, List<Integer>> entry : producerWins.entrySet()) {
             String producer = entry.getKey();
@@ -103,15 +102,15 @@ public class ProducerService {
 
             for (int i = 0; i < years.size() - 1; i++) {
                 int interval = years.get(i + 1) - years.get(i);
-                if (interval > max.getInterval()) {
-                    max.setInterval(interval);
-                    max.setProducer(producer);
-                    max.setPreviousWin(years.get(i));
-                    max.setFollowingWin(years.get(i + 1));
+                if (interval > maxInterval) {
+                    maxInterval = interval;
+                    listMaxIntervals.clear();
+                    listMaxIntervals.add(new ProducerPrizesDTO(producer, interval, years.get(i), years.get(i + 1)));
+                } else if (interval == maxInterval) {
+                    listMaxIntervals.add(new ProducerPrizesDTO(producer, interval, years.get(i), years.get(i + 1)));
                 }
             }
         }
-
-        return max;
+        return listMaxIntervals;
     }
 }
